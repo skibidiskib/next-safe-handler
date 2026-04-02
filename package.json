@@ -1,6 +1,6 @@
 {
   "name": "next-safe-handler",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Type-safe route handler builder for Next.js App Router with composable middleware, validation, and error handling",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -58,5 +58,5 @@
     "type": "git",
     "url": "https://github.com/skibidiskib/next-safe-handler"
   },
-  "homepage": "https://github.com/your-username/next-safe-handler#readme"
+  "homepage": "https://github.com/skibidiskib/next-safe-handler#readme"
 }
