@@ -13,6 +13,4 @@ export type {
   MiddlewareFn,
   NextRouteHandler,
   RouterConfig,
-  StandardSchema,
-  ZodLikeSchema,
 } from './types.js';

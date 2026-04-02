@@ -72,4 +72,16 @@ describe('runMiddlewareChain', () => {
       runMiddlewareChain([mw], makeReq(), {}, handler)
     ).rejects.toThrow('middleware error');
   });
+
+  it('throws if next() is called twice', async () => {
+    const mw = async ({ next }: any) => {
+      await next();
+      return next(); // second call should throw
+    };
+    const handler = async () => Response.json({ ok: true });
+
+    await expect(
+      runMiddlewareChain([mw], makeReq(), {}, handler)
+    ).rejects.toThrow('next() called multiple times');
+  });
 });

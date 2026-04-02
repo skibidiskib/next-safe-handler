@@ -12,7 +12,7 @@ import type {
 import { formatError, formatValidationError } from './errors.js';
 import { validateSchema } from './validate.js';
 import { parseBody, parseQuery, resolveParams } from './parse.js';
-import { createResponse } from './response.js';
+import { createResponse, isResponse } from './response.js';
 import { runMiddlewareChain } from './middleware.js';
 
 /**
@@ -58,6 +58,9 @@ export class RouteBuilder<
     schema: TSchema,
     opts?: InputOptions
   ): RouteBuilder<TCtx, InferOutput<TSchema>, TParams, TOutput> {
+    if (this.inputSchema) {
+      throw new Error('next-safe-handler: .input() called twice. Each handler can only have one input schema.');
+    }
     return new RouteBuilder(
       this.middlewares,
       this.config,
@@ -72,6 +75,9 @@ export class RouteBuilder<
   params<TSchema extends AnySchema<any>>(
     schema: TSchema
   ): RouteBuilder<TCtx, TInput, InferOutput<TSchema>, TOutput> {
+    if (this.paramsSchema) {
+      throw new Error('next-safe-handler: .params() called twice. Each handler can only have one params schema.');
+    }
     return new RouteBuilder(
       this.middlewares,
       this.config,
@@ -86,6 +92,9 @@ export class RouteBuilder<
   output<TSchema extends AnySchema<any>>(
     schema: TSchema
   ): RouteBuilder<TCtx, TInput, TParams, InferOutput<TSchema>> {
+    if (this.outputSchema) {
+      throw new Error('next-safe-handler: .output() called twice. Each handler can only have one output schema.');
+    }
     return new RouteBuilder(
       this.middlewares,
       this.config,
@@ -156,7 +165,7 @@ export class RouteBuilder<
             });
 
             // 4. Validate output if schema provided
-            if (outputSchema && !(output instanceof Response)) {
+            if (outputSchema && !isResponse(output)) {
               const result = await validateSchema(outputSchema, output);
               if (!result.success) {
                 console.error('next-safe-handler: Output validation failed', result.issues);
@@ -164,7 +173,7 @@ export class RouteBuilder<
                   {
                     error: {
                       message: 'Internal server error',
-                      code: 'OUTPUT_VALIDATION_ERROR',
+                      code: 'INTERNAL_SERVER_ERROR',
                       status: 500,
                     },
                   },
@@ -179,7 +188,12 @@ export class RouteBuilder<
         );
       } catch (error) {
         if (config.onError) {
-          return config.onError(error, req);
+          try {
+            return await config.onError(error, req);
+          } catch (onErrorFail) {
+            console.error('next-safe-handler: onError handler threw', onErrorFail);
+            return Response.json({ error: { message: 'Internal server error', code: 'INTERNAL_SERVER_ERROR', status: 500 } }, { status: 500 });
+          }
         }
         const { body, status } = formatError(error);
         return Response.json(body, { status });

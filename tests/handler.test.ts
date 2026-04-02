@@ -155,7 +155,7 @@ describe('output validation', () => {
     const res = await handler(makeReq());
     expect(res.status).toBe(500);
     const body = await res.json();
-    expect(body.error.code).toBe('OUTPUT_VALIDATION_ERROR');
+    expect(body.error.code).toBe('INTERNAL_SERVER_ERROR');
   });
 });
 

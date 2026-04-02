@@ -1,6 +1,6 @@
 {
   "name": "next-safe-handler",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Type-safe route handler builder for Next.js App Router with composable middleware, validation, and error handling",
   "type": "module",
   "main": "./dist/index.cjs",

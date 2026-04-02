@@ -7,9 +7,14 @@ import type { ErrorResponse, StandardSchemaIssue } from './types.js';
 export class HttpError extends Error {
   public readonly status: number;
   public readonly code: string;
-  public readonly details?: unknown;
+  public readonly details?: Array<{ path: string; message: string }>;
 
-  constructor(status: number, message: string, code?: string, details?: unknown) {
+  constructor(
+    status: number,
+    message: string,
+    code?: string,
+    details?: Array<{ path: string; message: string }>
+  ) {
     super(message);
     this.name = 'HttpError';
     this.status = status;
@@ -58,7 +63,7 @@ export function formatError(err: unknown): { body: ErrorResponse; status: number
           message: err.message,
           code: err.code,
           status: err.status,
-          ...(err.details ? { details: err.details as ErrorResponse['error']['details'] } : {}),
+          ...(err.details ? { details: err.details } : {}),
         },
       },
     };
@@ -77,7 +82,10 @@ export function formatError(err: unknown): { body: ErrorResponse; status: number
     };
   }
 
-  // Unknown error — never leak internals
+  // Always log unknown errors for debugging
+  console.error('next-safe-handler: Unhandled error', err);
+
+  // In development, include the error message for debugging
   if (process.env.NODE_ENV === 'development' && err instanceof Error) {
     return {
       status: 500,

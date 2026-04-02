@@ -1,5 +1,5 @@
 /** Check if a value is a Response (works across realms/polyfills) */
-function isResponse(data: unknown): data is Response {
+export function isResponse(data: unknown): data is Response {
   if (data instanceof Response) return true;
   if (typeof data !== 'object' || data === null) return false;
   const r = data as Record<string, unknown>;

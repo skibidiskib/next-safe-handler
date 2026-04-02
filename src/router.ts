@@ -12,25 +12,12 @@ import { RouteBuilder } from './handler.js';
 import { formatError } from './errors.js';
 import { runMiddlewareChain } from './middleware.js';
 import { createResponse } from './response.js';
-import { resolveParams } from './parse.js';
 
 /**
  * Router — reusable middleware chain.
  *
  * Immutable: each .use() returns a NEW Router with the middleware appended.
  * Share routers across route files for consistent auth/logging/etc.
- *
- * @example
- * ```typescript
- * const router = createRouter();
- * const authedRouter = router.use(authMiddleware);
- * const adminRouter = authedRouter.use(adminMiddleware);
- *
- * // In route.ts:
- * export const GET = adminRouter.handler(async ({ ctx }) => {
- *   return { users: await db.user.findMany() };
- * });
- * ```
  */
 export class Router<TCtx extends AnyContext> {
   /** @internal */
@@ -104,7 +91,6 @@ export class Router<TCtx extends AnyContext> {
           req,
           {},
           async (ctx) => {
-            const params = await resolveParams(context);
             const output = await fn({
               input: undefined as undefined,
               params: undefined as undefined,
@@ -116,7 +102,12 @@ export class Router<TCtx extends AnyContext> {
         );
       } catch (error) {
         if (config.onError) {
-          return config.onError(error, req);
+          try {
+            return await config.onError(error, req);
+          } catch (onErrorFail) {
+            console.error('next-safe-handler: onError handler threw', onErrorFail);
+            return Response.json({ error: { message: 'Internal server error', code: 'INTERNAL_SERVER_ERROR', status: 500 } }, { status: 500 });
+          }
         }
         const { body, status } = formatError(error);
         return Response.json(body, { status });

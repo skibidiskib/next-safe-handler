@@ -18,7 +18,8 @@ function isStandardSchema(schema: unknown): schema is StandardSchema {
     typeof schema === 'object' &&
     schema !== null &&
     '~standard' in schema &&
-    typeof (schema as StandardSchema)['~standard']?.validate === 'function'
+    typeof (schema as StandardSchema)['~standard']?.validate === 'function' &&
+    (schema as StandardSchema)['~standard']?.version === 1
   );
 }
 

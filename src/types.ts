@@ -66,8 +66,6 @@ export type HandlerFn<
 export interface RouterConfig {
   /** Custom error handler — override default error formatting */
   onError?: (error: unknown, req: Request) => Response | Promise<Response>;
-  /** Base path prefix for debugging */
-  basePath?: string;
 }
 
 /** Standardized error response shape */

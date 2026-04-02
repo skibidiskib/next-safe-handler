@@ -19,10 +19,17 @@ export async function runMiddlewareChain(
     }
 
     const middleware = middlewares[index++];
+    let called = false;
     return middleware({
       req,
       ctx,
-      next: async (newCtx = {} as AnyContext) => dispatch({ ...ctx, ...newCtx }),
+      next: async (newCtx = {} as AnyContext) => {
+        if (called) {
+          throw new Error('next-safe-handler: next() called multiple times in middleware. Each middleware must call next() at most once.');
+        }
+        called = true;
+        return dispatch({ ...ctx, ...newCtx });
+      },
     });
   }
 

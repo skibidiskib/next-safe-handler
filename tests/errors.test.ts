@@ -15,9 +15,10 @@ describe('HttpError', () => {
     expect(err.code).toBe('CUSTOM_CODE');
   });
 
-  it('allows details', () => {
-    const err = new HttpError(422, 'Invalid', 'INVALID', { field: 'email' });
-    expect(err.details).toEqual({ field: 'email' });
+  it('allows typed details array', () => {
+    const details = [{ path: 'email', message: 'Already taken' }];
+    const err = new HttpError(422, 'Invalid', 'INVALID', details);
+    expect(err.details).toEqual(details);
   });
 
   it('derives code from status', () => {
@@ -63,6 +64,31 @@ describe('formatError', () => {
     const { body } = formatError(err);
     expect(body.error.message).toBe('debug info');
     process.env.NODE_ENV = origEnv;
+  });
+
+  it('formats non-Error values (string throw)', () => {
+    const { body, status } = formatError('string error');
+    expect(status).toBe(500);
+    expect(body.error.code).toBe('INTERNAL_SERVER_ERROR');
+  });
+
+  it('formats non-Error values (null throw)', () => {
+    const { body, status } = formatError(null);
+    expect(status).toBe(500);
+    expect(body.error.code).toBe('INTERNAL_SERVER_ERROR');
+  });
+
+  it('includes HttpError details in response', () => {
+    const details = [{ path: 'email', message: 'Taken' }];
+    const err = new HttpError(400, 'Validation', 'BAD', details);
+    const { body } = formatError(err);
+    expect(body.error.details).toEqual(details);
+  });
+
+  it('omits details when HttpError has none', () => {
+    const err = new HttpError(404, 'Not found');
+    const { body } = formatError(err);
+    expect(body.error.details).toBeUndefined();
   });
 });
 
